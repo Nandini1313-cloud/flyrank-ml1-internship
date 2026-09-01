@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Content Refresh Opportunity Research Paper</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.7;
+    max-width: 1000px;
+    margin: auto;
+    padding: 40px 20px;
+    color: #222;
+    background: #ffffff;
+}
+
+h1 {
+    font-size: 42px;
+    line-height: 1.2;
+}
+
+h2 {
+    margin-top: 45px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 8px;
+}
+
+h3 {
+    margin-top: 30px;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 18px;
+}
+
+.box {
+    background: #f5f7fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.metric {
+    font-size: 30px;
+    font-weight: bold;
+}
+
+img {
+    max-width: 100%;
+    margin: 15px 0 25px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background: #f2f2f2;
+}
+
+li {
+    margin: 8px 0;
+}
+
+.footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+    color: #666;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Can ML Prioritize Content-Refresh Review Better Than a Simple Rule?</h1>
+
+<p class="subtitle">
+A public-safe research study using the FlyRank ML Internship dataset
+</p>
+
+<h2>Abstract</h2>
+
+<div class="box">
+<p>
+<strong>Question:</strong> Can a content-refresh ranking model help prioritize pages for human review better than a transparent rule baseline?
+<strong>Data:</strong> The study uses the bundled anonymized FlyRank starter release with 30,000 page-level rows, with metrics aggregated over a trailing 90-day window.
+<strong>Method:</strong> A rule baseline is compared with logistic regression, decision tree, and random forest models using a client-holdout split, while label-derived fields and pseudonymous IDs are excluded from model features.
+<strong>Result:</strong> The random forest measured Precision@50 of 0.740 versus 0.240 for the rule baseline on the same holdout, with ROC AUC of 0.750 versus 0.627.
+<strong>Use:</strong> The output is a directional review queue for human content teams, not an automatic publishing system or a causal claim that refreshing a page will improve performance.
+</p>
+</div>
+
+<h2>1. Introduction / Problem Statement</h2>
+
+<p>
+Content teams often have more pages to review than they can inspect manually.
+The practical question in this project is therefore:
+<strong>which existing content items should a human reviewer inspect first for possible refresh work?</strong>
+</p>
+
+<p>
+The system produces a ranked score, a suggested action, and reason codes.
+The goal is prioritization support rather than autonomous content editing or publishing.
+</p>
+
+<h2>2. Data</h2>
+
+<p>
+The study uses the bundled anonymized FlyRank starter release containing
+<strong>30,000 page-level rows</strong>.
+The public artifact does not expose client names, domains, URLs, titles, keywords, or raw search queries.
+</p>
+
+<p>
+The supplied page-level metrics are aggregated over a trailing 90-day window.
+The dataset also contains recent and previous 30-day aggregates used by the reference pipeline.
+</p>
+
+<p>
+The public capstone uses the bundled page-level CSV rather than directly querying the larger warehouse.
+Pseudonymous identifiers are used for grouping or joining but are not used as predictive features.
+</p>
+
+<p>
+Label-derived fields such as <code>trend_direction</code> and
+<code>trend_pct</code> were excluded from model features because they could leak information about the target.
+</p>
+
+<h2>3. Methodology</h2>
+
+<p>
+The target is <code>is_declining_label = 1</code> when
+<code>trend_direction == "down"</code>.
+This represents an observed decline in recent impressions relative to the prior 30-day period.
+</p>
+
+<p>
+The transparent baseline combines visibility, freshness, position-opportunity,
+and content-depth signals.
+The learned models use traffic, content, freshness, CTR, position,
+engagement, AI-session, and categorical context features.
+</p>
+
+<p>
+Validation uses a <strong>client-holdout split</strong>.
+Entire pseudonymized clients are held out for testing so that rows from the
+same client do not appear in both training and test data.
+</p>
+
+<p>
+Model selection uses Precision@50 because the practical use case is reviewing
+a relatively small top-ranked queue.
+Leakage checks exclude the target, direct target-source fields, and
+pseudonymous identifiers from predictive features.
+</p>
+
+<h2>4. Results vs Baseline</h2>
+
+<div class="box">
+<p>Random Forest Precision@50</p>
+<div class="metric">0.740</div>
+</div>
+
+<div class="box">
+<p>Rule Baseline Precision@50</p>
+<div class="metric">0.240</div>
+</div>
+
+<div class="box">
+<p>Random Forest ROC AUC</p>
+<div class="metric">0.750</div>
+</div>
+
+<div class="box">
+<p>Rule Baseline ROC AUC</p>
+<div class="metric">0.627</div>
+</div>
+
+<p>
+The comparison uses the same client-holdout test split.
+The declining-label base rate is 54.2%.
+The random forest measured 0.740 Precision@50 compared with 0.240 for
+the rule baseline.
+</p>
+
+<p>
+This is a ranking result on the evaluated split.
+It does not establish that refreshing these pages will cause improved
+performance.
+</p>
+
+<h3>Model vs Baseline</h3>
+
+<img src="../work/figures/model_vs_baseline_precision.svg"
+     alt="Precision at 50 comparison">
+
+<img src="../work/figures/model_vs_baseline_auc.svg"
+     alt="ROC AUC comparison">
+
+<h3>Important Features</h3>
+
+<img src="../work/figures/top_features_w07.svg"
+     alt="Top model features">
+
+<h3>Freshness / Decay Analysis</h3>
+
+<img src="../work/figures/freshness_decay_w07.svg"
+     alt="Freshness decay analysis">
+
+<h2>5. Limitations & Honest Framing</h2>
+
+<ul>
+<li>The public result uses the bundled 30,000-row anonymized starter slice, not the full 79-million-row warehouse.</li>
+<li>The target is an observed impression-decline label, not a measure of whether a refresh would succeed.</li>
+<li>The model ranks pages; it does not predict Google's ranking algorithm.</li>
+<li>The client-holdout design improves separation across clients but does not create a causal experiment.</li>
+<li>Feature importance shows association with model decisions, not proof of cause.</li>
+<li>A high model score does not mean that refreshing a page will necessarily improve future performance.</li>
+<li>A production system would require fresh monitoring, data-quality checks, policy review, and revalidation.</li>
+</ul>
+
+<h2>6. Ranked Recommendations</h2>
+
+<p>
+The action queue is intended to help an editor decide what to inspect first.
+</p>
+
+<table>
+<tr>
+<th>Rank</th>
+<th>Recommended Action</th>
+<th>Items</th>
+</tr>
+
+<tr>
+<td>1</td>
+<td>Refresh and review CTR</td>
+<td>6,654</td>
+</tr>
+
+<tr>
+<td>2</td>
+<td>Refresh</td>
+<td>8,188</td>
+</tr>
+
+<tr>
+<td>3</td>
+<td>Refresh and review engagement</td>
+<td>1,993</td>
+</tr>
+
+<tr>
+<td>4</td>
+<td>Expand and refresh</td>
+<td>82</td>
+</tr>
+
+<tr>
+<td>5</td>
+<td>Monitor</td>
+<td>13,083</td>
+</tr>
+</table>
+
+<h3>Human Review Rules</h3>
+
+<ol>
+<li>Open the recommended page.</li>
+<li>Check whether the reason code matches the page.</li>
+<li>Check current search intent and user needs.</li>
+<li>Check whether information is outdated.</li>
+<li>Check whether the proposed change is useful.</li>
+<li>The human reviewer makes the final decision.</li>
+</ol>
+
+<h3>What Should NOT Be Automated</h3>
+
+<ul>
+<li>Automatically publishing content.</li>
+<li>Automatically deleting content.</li>
+<li>Automatically rewriting important facts.</li>
+<li>Automatically changing medical, legal, financial, or safety information.</li>
+<li>Automatically sending client-facing recommendations.</li>
+<li>Treating a model score as proof of causal improvement.</li>
+</ul>
+
+<h2>7. Monitoring and Retraining</h2>
+
+<p>
+The recommendation system should be monitored for changes in ranking quality,
+data distributions, content mix, and feature or label definitions.
+</p>
+
+<ul>
+<li>Review the model if Precision@50 falls materially.</li>
+<li>Check population or label shift if the declining rate changes materially.</li>
+<li>Recheck recommendations if the content mix changes.</li>
+<li>Revalidate the pipeline after feature or label-definition changes.</li>
+<li>Retrain only when meaningful degradation or data changes justify it.</li>
+<li>Run fresh holdout validation before accepting a new model.</li>
+</ul>
+
+<h2>8. Reproducibility</h2>
+
+<p>
+The complete project is available in the public GitHub repository.
+The main analysis notebook is:
+<code>work/notebooks/capstone.ipynb</code>.
+The Week 7 action playbook is:
+<code>work/notebooks/w07_action_playbook.ipynb</code>.
+</p>
+
+<p>
+The reference training pipeline uses random seed 42 and client-holdout
+validation.
+The ranked action queue and reusable figures are generated from the
+repository's analysis artifacts.
+</p>
+
+<p>
+<a href="https://github.com/Nandini1313-cloud/flyrank-ml1-internship">
+View the GitHub repository
+</a>
+</p>
+
+<h2>9. Acknowledgments & Data Credit</h2>
+
+<p>
+Built on the
+<a href="https://flyrank.ai" target="_blank">
+FlyRank ML Internship dataset
+</a>.
+</p>
+
+<p>
+This public artifact uses the anonymized starter release supplied for the
+internship and follows the repository's public-safety constraints.
+</p>
+
+<div class="footer">
+<p>
+Research artifact created as part of the FlyRank ML Internship.
+</p>
+</div>
+
+</body>
+</html>
